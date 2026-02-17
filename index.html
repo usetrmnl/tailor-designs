@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRMNL Tailor Screen Gallery</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3D3D3E',
+                        accent: '#F8654B',
+                        secondary: '#E7E7E7',
+                        dark: '#0f172a',
+                        light: '#f8fafc'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+		a {
+			text-decoration: underline !important
+		}
+		.gallery-item {
+            transition: all 0.3s ease;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .gallery-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .filter-btn.active {
+            background-color: #3D3D3E;
+            color: white;
+        }
+        .splash-filter {
+            background-color: #3D3D3E;
+            color: white;
+        }
+        .loading-filter {
+            background-color: #F8654B;
+            color: white;
+        }
+        .screen-image {
+            object-fit: cover;
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        .screen-container {
+            aspect-ratio: 16/9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            width: 100%;
+        }
+        .modal-content {
+            max-width: 90vw;
+            max-height: 90vh;
+        }
+        .credit-text {
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+        .density-btn {
+            background-color: #E7E7E7;
+            border: 1px solid #3D3D3E;
+        }
+        .density-btn.active {
+            background-color: #3D3D3E;
+            color: white;
+        }
+        .filter-btn:hover {
+            color: inherit;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <header class="bg-white shadow-sm">
+        <div class="container mx-auto px-4 py-6">
+            <h1 class="text-3xl font-bold text-gray-900">TRMNL <a href="https://tailor.trmnl.com/">Tailor</a> Screen Gallery</h1>
+            <p class="text-gray-600 mt-2">Browse screens created by <a href="https://github.com/usetrmnl/tailor-designs">contributors</a></p>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        <!-- Stats and Controls -->
+        <div class="mb-6 bg-white rounded-lg shadow-sm p-4 flex flex-wrap justify-between items-center gap-4">
+            <div class="flex flex-wrap gap-4">
+                <div class="bg-gray-100 px-3 py-1 rounded-lg">
+                    <span class="text-sm text-gray-600">Total Screens:</span>
+                    <span id="total-count" class="font-semibold ml-1">0</span>
+                </div>
+                <div class="bg-blue-100 px-3 py-1 rounded-lg">
+                    <span class="text-sm text-blue-800">Splash:</span>
+                    <span id="splash-count" class="font-semibold ml-1">0</span>
+                </div>
+                <div class="bg-orange-100 px-3 py-1 rounded-lg">
+                    <span class="text-sm text-orange-800">Loading:</span>
+                    <span id="loading-count" class="font-semibold ml-1">0</span>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-2">
+                <!-- Density Toggle -->
+                <div class="flex items-center gap-1">
+                    <button id="density-1" class="density-btn px-3 py-1 rounded-lg text-sm" title="Dense">
+                        <i class="fas fa-th"></i>
+                    </button>
+                    <button id="density-2" class="density-btn px-3 py-1 rounded-lg text-sm" title="Medium">
+                        <i class="fas fa-th-large"></i>
+                    </button>
+                    <button id="density-3" class="density-btn px-3 py-1 rounded-lg text-sm" title="Large">
+                        <i class="fas fa-expand-alt"></i>
+                    </button>
+                </div>
+                
+                <!-- Filter Buttons -->
+                <div class="flex gap-2">
+                    <button id="all-filter" class="filter-btn px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-blue-100 hover:text-blue-700 transition-colors">All</button>
+                    <button id="splash-filter" class="filter-btn px-4 py-2 rounded-lg border border-blue-500 text-blue-600 hover:bg-blue-100 transition-colors">Splash</button>
+                    <button id="loading-filter" class="filter-btn px-4 py-2 rounded-lg border border-orange-500 text-orange-600 hover:bg-orange-100 transition-colors">Loading</button>
+                </div>
+                
+                <!-- Search -->
+                <div class="flex items-center gap-2">
+                    <input type="text" id="search-input" placeholder="Search screens..." class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <button id="clear-search" class="px-3 py-2 text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Screen Grid -->
+        <div id="gallery-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <!-- Screens will be dynamically loaded here -->
+        </div>
+
+        <!-- Empty state -->
+        <div id="empty-state" class="text-center py-12 hidden">
+            <i class="fas fa-search text-gray-400 text-5xl mb-4"></i>
+            <h3 class="text-xl font-medium text-gray-900 mb-2">No screens found</h3>
+            <p class="text-gray-500">Try adjusting your search or filter criteria</p>
+        </div>
+    </main>
+
+    <!-- Modal for full-size view -->
+    <div id="image-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+        <div class="modal-content bg-white rounded-lg overflow-hidden max-w-4xl max-h-full">
+            <div class="p-4 border-b flex justify-between items-center">
+                <h3 id="modal-title" class="text-xl font-semibold"></h3>
+                <button id="close-modal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            <div class="p-4 flex justify-center">
+                <img id="modal-image" src="" alt="" class="max-h-[70vh] max-w-full object-contain">
+            </div>
+            <div class="p-4 border-t flex justify-end gap-2">
+                <button id="download-modal" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
+                    <i class="fas fa-download"></i> Download
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-white border-t mt-12">
+        <div class="container mx-auto px-4 py-6 text-center text-gray-500">
+            <p><a href="https://trmnl.com">TRMNL</a> Screen Gallery - A collection of Tailor screen designs</p>
+        </div>
+    </footer>
+
+    <script>
+        // Function to fetch screens from JSON file or fallback to sample data for local testing
+        async function fetchScreens() {
+            // Try to load from screens.json first (from GitHub Actions workflow)
+            try {
+                const response = await fetch('screens.json');
+                if (response.ok) {
+                    const screensData = await response.json();
+                    return screensData;
+                }
+            } catch (error) {
+                console.warn('Failed to fetch screens.json, falling back to sample data:', error);
+            }
+            
+            // Fallback to sample data
+            return [
+                {
+                    filename: "800x480-splash-a_fishing_party_winslow_homer-clevelandart_org.png",
+                    width: 800,
+                    height: 480,
+                    type: "splash",
+                    name: "a_fishing_party_winslow_homer",
+					credit:"clevelandart_org"
+                },
+                {
+                    filename: "800x480-loading-dungeon_crawler_carl_princess_donut.png",
+                    width: 800,
+                    height: 480,
+                    type: "loading",
+                    name: "dungeon_crawler_carl_princess_donut"
+                }
+            ];
+        }
+
+        // Function to parse filename and extract metadata
+        function parseFilename(filename) {
+            const parts = filename.split('-');
+            if (parts.length < 3) return null;
+
+            const [resolution, type, ...nameParts] = parts;
+            const [width, height] = resolution.split('x').map(Number);
+            
+            // Check if there's a credit part (last part before extension)
+            let name = nameParts.join('_').split('.')[0];
+            let credit = null;
+            
+            // If the last part is not an extension, it might be credit
+            const namePartsArray = nameParts.join('_').split('.');
+            if (namePartsArray.length > 1) {
+                const ext = namePartsArray[namePartsArray.length - 1];
+                if (ext !== 'png') {
+                    // This means there's a credit part
+                    const fullName = nameParts.join('_');
+                    const lastHyphenIndex = fullName.lastIndexOf('-');
+                    if (lastHyphenIndex > 0) {
+                        name = fullName.substring(0, lastHyphenIndex);
+                        credit = fullName.substring(lastHyphenIndex + 1, fullName.length - 4); // Remove .png
+                    }
+                }
+            }
+
+            return {
+                filename,
+                width,
+                height,
+                type: type.toLowerCase(),
+                name,
+                credit
+            };
+        }
+
+        // Function to render screens
+        function renderScreens(screensToRender, density = '2') {
+            const container = document.getElementById('gallery-container');
+            const emptyState = document.getElementById('empty-state');
+            
+            if (screensToRender.length === 0) {
+                emptyState.classList.remove('hidden');
+                container.innerHTML = '';
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            
+            // Determine grid classes based on density
+            let gridClass = 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4';
+            let imageHeight = 'h-full';
+            let cardPadding = 'p-3';
+            let titleSize = 'text-base';
+            
+            if (density === '1') { // Dense
+                gridClass = 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5';
+                imageHeight = 'h-full';
+                cardPadding = 'p-1';
+                titleSize = 'text-xs';
+            } else if (density === '2') { // Medium
+                gridClass = 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4';
+                imageHeight = 'h-full';
+                cardPadding = 'p-2';
+                titleSize = 'text-sm';
+            } else if (density === '3') { // Large
+                gridClass = 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3';
+                imageHeight = 'h-full';
+                cardPadding = 'p-4';
+                titleSize = 'text-lg';
+            }
+            
+            container.className = `grid ${gridClass} gap-2`;
+            
+            container.innerHTML = screensToRender.map(screen => {
+                const displayName = screen.name.replace(/_/g, ' ');
+                
+                return `
+                    <div class="gallery-item bg-white rounded-lg shadow-sm overflow-hidden cursor-pointer" data-filename="${screen.filename}" data-name="${displayName}" data-credit="${screen.credit || ''}">
+                        <div class="screen-container bg-gray-100">
+                            <img src="screens/${screen.filename}" 
+                                 alt="${screen.name}" 
+                                 class="screen-image"
+                                 onerror="this.src='https://placehold.co/300x200?text=Image+Not+Found'">
+                        </div>
+                        <div class="${cardPadding}">
+                            <h3 class="${titleSize} font-semibold text-gray-900 truncate">${displayName}</h3>
+                            <div class="flex justify-between items-center mt-1">
+                                <span class="text-xs text-gray-500">${screen.width}×${screen.height}</span>
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium 
+                                    ${screen.type === 'splash' ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800'} capitalize">
+                                    ${screen.type}
+                                </span>
+                            </div>
+                            <div class="flex justify-end mt-2">
+                                <button class="text-xs text-green-600 hover:text-green-800 flex items-center gap-1 download-btn" data-filename="${screen.filename}">
+                                    <i class="fas fa-download"></i> Download
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Function to update counts
+        function updateCounts(screens) {
+            const totalCount = screens.length;
+            const splashCount = screens.filter(s => s.type === 'splash').length;
+            const loadingCount = screens.filter(s => s.type === 'loading').length;
+            
+            document.getElementById('total-count').textContent = totalCount;
+            document.getElementById('splash-count').textContent = splashCount;
+            document.getElementById('loading-count').textContent = loadingCount;
+        }
+
+        // Modal functions
+        function openModal(filename, name, credit) {
+            const modal = document.getElementById('image-modal');
+            const modalImage = document.getElementById('modal-image');
+            const modalTitle = document.getElementById('modal-title');
+            const downloadBtn = document.getElementById('download-modal');
+            
+            modalImage.src = `screens/${filename}`;
+            modalTitle.textContent = name;
+            
+            // Set download button to use the correct filename
+            downloadBtn.onclick = function() {
+                // Create a temporary link to trigger download
+                const link = document.createElement('a');
+                link.href = `screens/${filename}`;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            };
+            
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('image-modal');
+            modal.classList.add('hidden');
+        }
+
+        // Global variable to store parsed screens data
+        let parsedScreens = [];
+
+        // Filter and search functionality
+        function filterScreens() {
+            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+            const activeFilter = document.querySelector('.filter-btn.active')?.id;
+            
+            let filteredScreens = parsedScreens;
+
+            // Apply type filter
+            if (activeFilter === 'splash-filter') {
+                filteredScreens = filteredScreens.filter(screen => screen.type === 'splash');
+            } else if (activeFilter === 'loading-filter') {
+                filteredScreens = filteredScreens.filter(screen => screen.type === 'loading');
+            }
+
+            // Apply search filter
+            if (searchTerm) {
+                filteredScreens = filteredScreens.filter(screen => 
+                    screen.name.toLowerCase().includes(searchTerm) ||
+                    `${screen.width}×${screen.height}`.toLowerCase().includes(searchTerm) ||
+                    (screen.credit && screen.credit.toLowerCase().includes(searchTerm))
+                );
+            }
+
+            renderScreens(filteredScreens);
+        }
+
+        // Initialize the gallery
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Fetch screens data
+            const screens = await fetchScreens();
+            
+            // Parse filenames to get metadata
+            parsedScreens = screens.map(screen => parseFilename(screen.filename));
+            
+            // Set up filter buttons - single select with outlined style
+            document.querySelectorAll('.filter-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    // Remove active class from all buttons
+                    document.querySelectorAll('.filter-btn').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    // Add active class to clicked button
+                    this.classList.add('active');
+                    
+                    filterScreens();
+                });
+            });
+
+            // Set up density toggle buttons
+            const densityButtons = document.querySelectorAll('.density-btn');
+            densityButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    densityButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    renderScreens(parsedScreens, this.id.split('-')[1]);
+                });
+            });
+
+            // Set initial active state for density buttons
+            document.getElementById('density-2').classList.add('active');
+
+            // Set initial active filter to ALL
+            document.getElementById('all-filter').classList.add('active');
+
+            // Set up search functionality
+            const searchInput = document.getElementById('search-input');
+            searchInput.addEventListener('input', filterScreens);
+            
+            // Clear search button
+            document.getElementById('clear-search').addEventListener('click', function() {
+                searchInput.value = '';
+                filterScreens();
+            });
+
+            // Close modal
+            document.getElementById('close-modal').addEventListener('click', closeModal);
+
+            // Close modal when clicking outside
+            document.getElementById('image-modal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeModal();
+                }
+            });
+
+            // Set up download buttons
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('download-btn') || e.target.closest('.download-btn')) {
+                    const btn = e.target.classList.contains('download-btn') ? e.target : e.target.closest('.download-btn');
+                    const filename = btn.getAttribute('data-filename');
+                    // Create a temporary link to trigger download
+                    const link = document.createElement('a');
+                    link.href = `screens/${filename}`;
+                    link.download = filename;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+            });
+
+            // Set up thumbnail click to open modal
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.gallery-item') && !e.target.classList.contains('download-btn')) {
+                    const item = e.target.closest('.gallery-item');
+                    const filename = item.getAttribute('data-filename');
+                    const name = item.getAttribute('data-name');
+                    const credit = item.getAttribute('data-credit');
+                    openModal(filename, name, credit);
+                }
+            });
+
+            // Initial render
+            updateCounts(parsedScreens);
+            renderScreens(parsedScreens);
+        });
+    </script>
+</body>
+</html>
