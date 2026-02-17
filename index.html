@@ -259,42 +259,56 @@
 
     <footer class="bg-white border-t mt-12">
         <div class="container mx-auto px-4 py-6 text-center text-gray-500">
-            <p>Screen Gallery - A collection of screen designs</p>
+            <p>TRMNL Screen Gallery - A collection of Tailor screen designs</p>
         </div>
     </footer>
 
     <script>
-        // Sample data for screens (in a real implementation, this would come from a JSON file or API)
-        const screens = [
-            {
-                filename: "800x480-splash-hourglass_with_butterflies.png",
-                width: 800,
-                height: 480,
-                type: "splash",
-                name: "hourglass_with_butterflies"
-            },
-            {
-                filename: "800x480-splash-blank.png",
-                width: 800,
-                height: 480,
-                type: "splash",
-                name: "blank"
-            },
-            {
-                filename: "800x480-splash-a_fishing_party_winslow_homer-clevelandart_org.png",
-                width: 800,
-                height: 480,
-                type: "splash",
-                name: "a_fishing_party_winslow_homer-clevelandart_org"
-            },
-            {
-                filename: "800x480-loading-dungeon_crawler_carl_princess_donut.png",
-                width: 800,
-                height: 480,
-                type: "loading",
-                name: "dungeon_crawler_carl_princess_donut"
+        // Function to fetch screens from JSON file or fallback to sample data
+        async function fetchScreens() {
+            // Try to load from screens.json first (from GitHub Actions workflow)
+            try {
+                const response = await fetch('screens.json');
+                if (response.ok) {
+                    const screensData = await response.json();
+                    return screensData;
+                }
+            } catch (error) {
+                console.warn('Failed to fetch screens.json, falling back to sample data:', error);
             }
-        ];
+            
+            // Fallback to sample data
+            return [
+                {
+                    filename: "800x480-splash-hourglass_with_butterflies.png",
+                    width: 800,
+                    height: 480,
+                    type: "splash",
+                    name: "hourglass_with_butterflies"
+                },
+                {
+                    filename: "800x480-splash-blank.png",
+                    width: 800,
+                    height: 480,
+                    type: "splash",
+                    name: "blank"
+                },
+                {
+                    filename: "800x480-splash-a_fishing_party_winslow_homer-clevelandart_org.png",
+                    width: 800,
+                    height: 480,
+                    type: "splash",
+                    name: "a_fishing_party_winslow_homer-clevelandart_org"
+                },
+                {
+                    filename: "800x480-loading-dungeon_crawler_carl_princess_donut.png",
+                    width: 800,
+                    height: 480,
+                    type: "loading",
+                    name: "dungeon_crawler_carl_princess_donut"
+                }
+            ];
+        }
 
         // Function to parse filename and extract metadata
         function parseFilename(filename) {
@@ -468,8 +482,11 @@
             renderScreens(filteredScreens);
         }
 
-        // Initialize the gallery
-        document.addEventListener('DOMContentLoaded', () => {
+// Initialize the gallery
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Fetch screens data
+            const screens = await fetchScreens();
+            
             // Parse filenames to get metadata
             const parsedScreens = screens.map(screen => parseFilename(screen.filename));
             
@@ -562,6 +579,78 @@
             updateCounts(parsedScreens);
             renderScreens(parsedScreens);
         });
+
+            // Set up density toggle buttons
+            document.getElementById('density-1').addEventListener('click', function() {
+                document.querySelectorAll('.density-btn').forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                renderScreens(parsedScreens, '1');
+            });
+            
+            document.getElementById('density-2').addEventListener('click', function() {
+                document.querySelectorAll('.density-btn').forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                renderScreens(parsedScreens, '2');
+            });
+            
+            document.getElementById('density-3').addEventListener('click', function() {
+                document.querySelectorAll('.density-btn').forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                renderScreens(parsedScreens, '3');
+            });
+
+            // Set initial active state for density buttons
+            document.getElementById('density-2').classList.add('active');
+
+            // Set initial active filter to ALL
+            document.getElementById('all-filter').classList.add('active');
+
+            // Set up search functionality
+            const searchInput = document.getElementById('search-input');
+            searchInput.addEventListener('input', filterScreens);
+            
+            // Clear search button
+            document.getElementById('clear-search').addEventListener('click', function() {
+                searchInput.value = '';
+                filterScreens();
+            });
+
+            // Close modal
+            document.getElementById('close-modal').addEventListener('click', closeModal);
+
+            // Close modal when clicking outside
+            document.getElementById('image-modal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeModal();
+                }
+            });
+
+            // Set up download buttons
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('download-btn') || e.target.closest('.download-btn')) {
+                    const btn = e.target.classList.contains('download-btn') ? e.target : e.target.closest('.download-btn');
+                    const filename = btn.getAttribute('data-filename');
+                    // Create a temporary link to trigger download
+                    const link = document.createElement('a');
+                    link.href = `screens/${filename}`;
+                    link.download = filename;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+            });
+
+            // Set up thumbnail click to open modal
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.gallery-item') && !e.target.classList.contains('download-btn')) {
+                    const item = e.target.closest('.gallery-item');
+                    const filename = item.getAttribute('data-filename');
+                    const name = item.getAttribute('data-name');
+                    const credit = item.getAttribute('data-credit');
+                    openModal(filename, name, credit);
+                }
+            });
+
     </script>
 </body>
 </html>
