@@ -23,39 +23,28 @@ jobs:
         find screens -name "*.png" -type f | sort | head -n 1000 | while read file; do
           if [ -f "$file" ]; then
             filename=$(basename "$file")
-            # Parse filename components
-            IFS='-' read -ra parts <<< "$filename"
+            # Strip .png extension before splitting
+            base="${filename%.png}"
+            IFS='-' read -ra parts <<< "$base"
+
             if [ ${#parts[@]} -ge 3 ]; then
               resolution="${parts[0]}"
               type="${parts[1]}"
-              
-              # Handle credit part (if exists)
-              name_parts=("${parts[@]:2}")
-              name_part=""
+              name="${parts[2]}"
               credit=""
-              
-              # Check if the last part is a valid extension
-              last_part="${name_parts[-1]}"
-              if [[ "$last_part" == *.png ]]; then
-                # No credit, just the filename part
-                name_part=$(echo "${name_parts[*]:0:${#name_parts[@]}-1}" | tr ' ' '_')
-                # Remove .png extension from last part
-                name_part="${name_part%.*}"
-              else
-                # Has credit - last part is credit, second to last is name
-                name_part=$(echo "${name_parts[*]:0:${#name_parts[@]}-1}" | tr ' ' '_')
-                credit="${name_parts[-1]}"
+
+              if [ ${#parts[@]} -ge 4 ]; then
+                credit="${parts[3]}"
               fi
-              
+
               width_height=(${resolution//x/ })
               width=${width_height[0]}
               height=${width_height[1]}
-              
-              # Escape quotes and special characters for JSON
+
               escaped_filename=$(echo "$filename" | sed 's/\\/\\\\/g; s/"/\\"/g')
-              escaped_name=$(echo "$name_part" | sed 's/\\/\\\\/g; s/"/\\"/g')
+              escaped_name=$(echo "$name" | sed 's/\\/\\\\/g; s/"/\\"/g')
               escaped_credit=$(echo "$credit" | sed 's/\\/\\\\/g; s/"/\\"/g')
-              
+
               echo "  {\"filename\":\"$escaped_filename\",\"width\":$width,\"height\":$height,\"type\":\"$type\",\"name\":\"$escaped_name\",\"credit\":\"$escaped_credit\"}," >> screens.json
             fi
           fi
