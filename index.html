@@ -77,94 +77,6 @@
             background-color: #3D3D3E;
             color: white;
         }
-        .gallery-item:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        }
-        .filter-btn.active {
-            background-color: #3D3D3E;
-            color: white;
-        }
-        .splash-filter {
-            background-color: #3D3D3E;
-            color: white;
-        }
-        .loading-filter {
-            background-color: #F8654B;
-            color: white;
-        }
-        .screen-image {
-            object-fit: cover;
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
-        .screen-container {
-            aspect-ratio: 16/9;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .modal-content {
-            max-width: 90vw;
-            max-height: 90vh;
-        }
-        .credit-text {
-            font-size: 0.75rem;
-            color: #6b7280;
-        }
-        .density-btn {
-            background-color: #E7E7E7;
-            border: 1px solid #3D3D3E;
-        }
-        .density-btn.active {
-            background-color: #3D3D3E;
-            color: white;
-        }
-        .gallery-item:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        }
-        .filter-btn.active {
-            background-color: #3D3D3E;
-            color: white;
-        }
-        .splash-filter {
-            background-color: #3D3D3E;
-            color: white;
-        }
-        .loading-filter {
-            background-color: #F8654B;
-            color: white;
-        }
-        .screen-image {
-            object-fit: cover;
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
-        .screen-container {
-            aspect-ratio: 16/9;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .modal-content {
-            max-width: 90vw;
-            max-height: 90vh;
-        }
-        .credit-text {
-            font-size: 0.75rem;
-            color: #6b7280;
-        }
-        .density-btn {
-            background-color: #E7E7E7;
-            border: 1px solid #3D3D3E;
-        }
-        .density-btn.active {
-            background-color: #3D3D3E;
-            color: white;
-        }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -456,12 +368,15 @@
             modal.classList.add('hidden');
         }
 
+        // Global variable to store parsed screens data
+        let parsedScreens = [];
+
         // Filter and search functionality
         function filterScreens() {
             const searchTerm = document.getElementById('search-input').value.toLowerCase();
             const activeFilter = document.querySelector('.filter-btn.active')?.id;
             
-            let filteredScreens = screens;
+            let filteredScreens = parsedScreens;
 
             // Apply type filter
             if (activeFilter === 'splash-filter') {
@@ -482,13 +397,13 @@
             renderScreens(filteredScreens);
         }
 
-// Initialize the gallery
+        // Initialize the gallery
         document.addEventListener('DOMContentLoaded', async () => {
             // Fetch screens data
             const screens = await fetchScreens();
             
             // Parse filenames to get metadata
-            const parsedScreens = screens.map(screen => parseFilename(screen.filename));
+            parsedScreens = screens.map(screen => parseFilename(screen.filename));
             
             // Set up filter buttons - single select with outlined style
             document.querySelectorAll('.filter-btn').forEach(button => {
@@ -505,22 +420,13 @@
             });
 
             // Set up density toggle buttons
-            document.getElementById('density-1').addEventListener('click', function() {
-                document.querySelectorAll('.density-btn').forEach(btn => btn.classList.remove('active'));
-                this.classList.add('active');
-                renderScreens(parsedScreens, '1');
-            });
-            
-            document.getElementById('density-2').addEventListener('click', function() {
-                document.querySelectorAll('.density-btn').forEach(btn => btn.classList.remove('active'));
-                this.classList.add('active');
-                renderScreens(parsedScreens, '2');
-            });
-            
-            document.getElementById('density-3').addEventListener('click', function() {
-                document.querySelectorAll('.density-btn').forEach(btn => btn.classList.remove('active'));
-                this.classList.add('active');
-                renderScreens(parsedScreens, '3');
+            const densityButtons = document.querySelectorAll('.density-btn');
+            densityButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    densityButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    renderScreens(parsedScreens, this.id.split('-')[1]);
+                });
             });
 
             // Set initial active state for density buttons
@@ -579,78 +485,6 @@
             updateCounts(parsedScreens);
             renderScreens(parsedScreens);
         });
-
-            // Set up density toggle buttons
-            document.getElementById('density-1').addEventListener('click', function() {
-                document.querySelectorAll('.density-btn').forEach(btn => btn.classList.remove('active'));
-                this.classList.add('active');
-                renderScreens(parsedScreens, '1');
-            });
-            
-            document.getElementById('density-2').addEventListener('click', function() {
-                document.querySelectorAll('.density-btn').forEach(btn => btn.classList.remove('active'));
-                this.classList.add('active');
-                renderScreens(parsedScreens, '2');
-            });
-            
-            document.getElementById('density-3').addEventListener('click', function() {
-                document.querySelectorAll('.density-btn').forEach(btn => btn.classList.remove('active'));
-                this.classList.add('active');
-                renderScreens(parsedScreens, '3');
-            });
-
-            // Set initial active state for density buttons
-            document.getElementById('density-2').classList.add('active');
-
-            // Set initial active filter to ALL
-            document.getElementById('all-filter').classList.add('active');
-
-            // Set up search functionality
-            const searchInput = document.getElementById('search-input');
-            searchInput.addEventListener('input', filterScreens);
-            
-            // Clear search button
-            document.getElementById('clear-search').addEventListener('click', function() {
-                searchInput.value = '';
-                filterScreens();
-            });
-
-            // Close modal
-            document.getElementById('close-modal').addEventListener('click', closeModal);
-
-            // Close modal when clicking outside
-            document.getElementById('image-modal').addEventListener('click', function(e) {
-                if (e.target === this) {
-                    closeModal();
-                }
-            });
-
-            // Set up download buttons
-            document.addEventListener('click', function(e) {
-                if (e.target.classList.contains('download-btn') || e.target.closest('.download-btn')) {
-                    const btn = e.target.classList.contains('download-btn') ? e.target : e.target.closest('.download-btn');
-                    const filename = btn.getAttribute('data-filename');
-                    // Create a temporary link to trigger download
-                    const link = document.createElement('a');
-                    link.href = `screens/${filename}`;
-                    link.download = filename;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                }
-            });
-
-            // Set up thumbnail click to open modal
-            document.addEventListener('click', function(e) {
-                if (e.target.closest('.gallery-item') && !e.target.classList.contains('download-btn')) {
-                    const item = e.target.closest('.gallery-item');
-                    const filename = item.getAttribute('data-filename');
-                    const name = item.getAttribute('data-name');
-                    const credit = item.getAttribute('data-credit');
-                    openModal(filename, name, credit);
-                }
-            });
-
     </script>
 </body>
 </html>
