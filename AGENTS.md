@@ -6,6 +6,9 @@ This repository stores screen designs created by individuals. Screens are pushed
 ## File Structure
 - `screens/` - Directory containing all screen files
 - `.github/workflows/validate-images.yml` - Workflow that validates file naming conventions
+- `.github/workflows/update-screens-json.yml` - Workflow that automatically generates screens.json
+- `index.html` - Main gallery webpage
+- `screens.json` - Auto-generated JSON metadata for all screens
 
 ## Naming Convention
 Files in the `screens/` directory must follow this format:
@@ -44,3 +47,6 @@ The validation workflow ensures all files:
 3. Have a valid PNG file format
 4. Match the specified dimensions in filename with actual image dimensions
 5. Have the correct type (loading or splash)
+
+## Deployment
+The gallery is automatically deployed to GitHub Pages via the `deploy-to-gh-pages.yml` workflow when changes are pushed to main branch.
