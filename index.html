@@ -6,21 +6,6 @@
     <title>TRMNL Tailor Screen Gallery</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#3D3D3E',
-                        accent: '#F8654B',
-                        secondary: '#E7E7E7',
-                        dark: '#0f172a',
-                        light: '#f8fafc'
-                    }
-                }
-            }
-        }
-    </script>
     <style>
 		a {
 			text-decoration: underline !important
@@ -37,14 +22,6 @@
         }
         .filter-btn.active {
             background-color: #3D3D3E;
-            color: white;
-        }
-        .splash-filter {
-            background-color: #3D3D3E;
-            color: white;
-        }
-        .loading-filter {
-            background-color: #F8654B;
             color: white;
         }
         .screen-image {
@@ -64,10 +41,6 @@
         .modal-content {
             max-width: 90vw;
             max-height: 90vh;
-        }
-        .credit-text {
-            font-size: 0.75rem;
-            color: #6b7280;
         }
         .density-btn {
             background-color: #E7E7E7;
@@ -165,7 +138,7 @@
                 <img id="modal-image" src="" alt="" class="max-h-[70vh] max-w-full object-contain">
             </div>
             <div class="p-4 border-t flex justify-end gap-2">
-                <button id="download-modal" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
+                <button id="download-modal" data-filename="" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
                     <i class="fas fa-download"></i> Download
                 </button>
             </div>
@@ -180,74 +153,47 @@
 
     <script>
         // Function to fetch screens from JSON file or fallback to sample data for local testing
-        async function fetchScreens() {
-            // Try to load from screens.json first (from GitHub Actions workflow)
-            try {
-                const response = await fetch('screens.json');
-                if (response.ok) {
-                    const screensData = await response.json();
-                    return screensData;
-                }
-            } catch (error) {
-                console.warn('Failed to fetch screens.json, falling back to sample data:', error);
-            }
-            
-            // Fallback to sample data
-            return [
-                {
-                    filename: "800x480-splash-a_fishing_party_winslow_homer-clevelandart_org.png",
-                    width: 800,
-                    height: 480,
-                    type: "splash",
-                    name: "a_fishing_party_winslow_homer",
-					credit:"clevelandart_org"
-                },
-                {
-                    filename: "800x480-loading-dungeon_crawler_carl_princess_donut.png",
-                    width: 800,
-                    height: 480,
-                    type: "loading",
-                    name: "dungeon_crawler_carl_princess_donut"
-                }
-            ];
-        }
+		async function fetchScreens() {
+			try {
+				const response = await fetch('screens.json');
+				if (response.ok) {
+					return await response.json();
+				}
+				throw new Error(`HTTP ${response.status}`);
+			} catch (error) {
+				console.warn('Failed to fetch screens.json, using fallback data:', error);
+				showFallbackBanner();
+				return FALLBACK_SCREENS;
+			}
+		}
 
-        // Function to parse filename and extract metadata
-        function parseFilename(filename) {
-            const parts = filename.split('-');
-            if (parts.length < 3) return null;
+		function showFallbackBanner() {
+			const banner = document.createElement('div');
+			banner.className = 'bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded mb-4 flex justify-between items-center';
+			banner.innerHTML = `
+				<span><strong>Dev mode:</strong> screens.json unavailable, showing fallback data.</span>
+				<button onclick="this.parentElement.remove()" class="text-yellow-800 hover:text-yellow-900 font-bold ml-4">✕</button>
+			`;
+			document.querySelector('main').prepend(banner);
+		}
 
-            const [resolution, type, ...nameParts] = parts;
-            const [width, height] = resolution.split('x').map(Number);
-            
-            // Check if there's a credit part (last part before extension)
-            let name = nameParts.join('_').split('.')[0];
-            let credit = null;
-            
-            // If the last part is not an extension, it might be credit
-            const namePartsArray = nameParts.join('_').split('.');
-            if (namePartsArray.length > 1) {
-                const ext = namePartsArray[namePartsArray.length - 1];
-                if (ext !== 'png') {
-                    // This means there's a credit part
-                    const fullName = nameParts.join('_');
-                    const lastHyphenIndex = fullName.lastIndexOf('-');
-                    if (lastHyphenIndex > 0) {
-                        name = fullName.substring(0, lastHyphenIndex);
-                        credit = fullName.substring(lastHyphenIndex + 1, fullName.length - 4); // Remove .png
-                    }
-                }
-            }
-
-            return {
-                filename,
-                width,
-                height,
-                type: type.toLowerCase(),
-                name,
-                credit
-            };
-        }
+		const FALLBACK_SCREENS = [
+			{
+				filename: "800x480-splash-a_fishing_party_winslow_homer-clevelandart_org.png",
+				width: 800,
+				height: 480,
+				type: "splash",
+				name: "a_fishing_party_winslow_homer",
+				credit:"clevelandart_org"
+			},
+			{
+				filename: "800x480-loading-dungeon_crawler_carl_princess_donut.png",
+				width: 800,
+				height: 480,
+				type: "loading",
+				name: "dungeon_crawler_carl_princess_donut"
+			}
+		];
 
         // Function to render screens
         function renderScreens(screensToRender, density = '2') {
@@ -321,37 +267,23 @@
         // Function to update counts
         function updateCounts(screens) {
             const totalCount = screens.length;
-            const splashCount = screens.filter(s => s.type === 'splash').length;
-            const loadingCount = screens.filter(s => s.type === 'loading').length;
-            
+			let splashCount = 0, loadingCount = 0;
+			for (const s of screens) {
+				if (s.type === 'splash') splashCount++;
+				else if (s.type === 'loading') loadingCount++;
+			}            
             document.getElementById('total-count').textContent = totalCount;
             document.getElementById('splash-count').textContent = splashCount;
             document.getElementById('loading-count').textContent = loadingCount;
         }
 
         // Modal functions
-        function openModal(filename, name, credit) {
-            const modal = document.getElementById('image-modal');
-            const modalImage = document.getElementById('modal-image');
-            const modalTitle = document.getElementById('modal-title');
-            const downloadBtn = document.getElementById('download-modal');
-            
-            modalImage.src = `screens/${filename}`;
-            modalTitle.textContent = name;
-            
-            // Set download button to use the correct filename
-            downloadBtn.onclick = function() {
-                // Create a temporary link to trigger download
-                const link = document.createElement('a');
-                link.href = `screens/${filename}`;
-                link.download = filename;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            };
-            
-            modal.classList.remove('hidden');
-        }
+        function openModal(filename, name) {
+			document.getElementById('modal-image').src = `screens/${filename}`;
+			document.getElementById('modal-title').textContent = name;
+			document.getElementById('download-modal').dataset.filename = filename;
+			document.getElementById('image-modal').classList.remove('hidden');
+		}
 
         function closeModal() {
             const modal = document.getElementById('image-modal');
@@ -393,7 +325,7 @@
             const screens = await fetchScreens();
             
             // Parse filenames to get metadata
-            parsedScreens = screens.map(screen => parseFilename(screen.filename));
+            parsedScreens = screens;
             
             // Set up filter buttons - single select with outlined style
             document.querySelectorAll('.filter-btn').forEach(button => {
@@ -434,7 +366,16 @@
                 searchInput.value = '';
                 filterScreens();
             });
-
+			
+			document.getElementById('download-modal').addEventListener('click', function() {
+				const filename = this.dataset.filename;
+				const link = document.createElement('a');
+				link.href = `screens/${filename}`;
+				link.download = filename;
+				document.body.appendChild(link);
+				link.click();
+				document.body.removeChild(link);
+			});
             // Close modal
             document.getElementById('close-modal').addEventListener('click', closeModal);
 
@@ -446,30 +387,24 @@
             });
 
             // Set up download buttons
-            document.addEventListener('click', function(e) {
-                if (e.target.classList.contains('download-btn') || e.target.closest('.download-btn')) {
-                    const btn = e.target.classList.contains('download-btn') ? e.target : e.target.closest('.download-btn');
-                    const filename = btn.getAttribute('data-filename');
-                    // Create a temporary link to trigger download
-                    const link = document.createElement('a');
-                    link.href = `screens/${filename}`;
-                    link.download = filename;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                }
-            });
+			document.addEventListener('click', function(e) {
+				const downloadBtn = e.target.closest('.download-btn');
+				const galleryItem = e.target.closest('.gallery-item');
 
-            // Set up thumbnail click to open modal
-            document.addEventListener('click', function(e) {
-                if (e.target.closest('.gallery-item') && !e.target.classList.contains('download-btn')) {
-                    const item = e.target.closest('.gallery-item');
-                    const filename = item.getAttribute('data-filename');
-                    const name = item.getAttribute('data-name');
-                    const credit = item.getAttribute('data-credit');
-                    openModal(filename, name, credit);
-                }
-            });
+				if (downloadBtn) {
+					const link = document.createElement('a');
+					link.href = `screens/${downloadBtn.dataset.filename}`;
+					link.download = downloadBtn.dataset.filename;
+					document.body.appendChild(link);
+					link.click();
+					document.body.removeChild(link);
+				} else if (galleryItem) {
+					openModal(
+						galleryItem.dataset.filename,
+						galleryItem.dataset.name
+					);
+				}
+			});
 
             // Initial render
             updateCounts(parsedScreens);
