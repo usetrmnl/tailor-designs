@@ -12,8 +12,10 @@ Customize TRMNL with Tailor, our firmware tool that writes custom splash and loa
 
 ### Filename Structure
 Hyphen separated sections, with underscore for spaces within a section. _Credit is optional._
+
 **WIDTHxHEIGHT-TYPE-UNIQUE_NAME-CREDIT?.png**
-_e.g._ 
+
+_e.g._
 `800x480-splash-dungeon_crawler_carl_safehouse-mashermello.png`
 `800x480-loading-dungeon_crawler_carl_princess_donut.png`
 
