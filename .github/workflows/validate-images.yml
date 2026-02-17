@@ -1,53 +1,75 @@
-name: Image Validation and Gallery Update
+name: Strict Image Validation
 
 on:
-  push:
-    branches: [ main ]
   pull_request:
     paths:
-      - 'screens/800x480/**'
+      - 'screens/**'
 
 jobs:
-  process-images:
+  validate:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
           lfs: true
 
       - name: Checkout LFS objects
         run: git lfs checkout
 
       - name: Install ImageMagick
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y imagemagick
+        run: sudo apt-get update && sudo apt-get install -y imagemagick
 
-      - name: Validate PNG dimensions
+      - name: Validate Files
         run: |
-          # Find all pngs in the 800x480 directory
-          FILES=$(find screens/800x480 -name "*.png")
+          FILES=$(find screens -name "*.png")
+          
           for FILE in $FILES; do
-            echo "Validating $FILE"
-            # Extract dimensions
-            DIMENSIONS=$(identify -format "%wx%h" "$FILE")
-            if [ "$DIMENSIONS" != "800x480" ]; then
-              echo "::error file=$FILE::Invalid dimensions: $DIMENSIONS. Must be 800x480."
+            FILENAME=$(basename "$FILE")
+            echo "Inspecting: $FILENAME"
+
+            # 1. Basic Character & Structure Check
+            if [[ ! "$FILENAME" =~ ^[a-z0-9x_-]+\.png$ ]]; then
+              echo "::error file=$FILE::Character Violation: Use only lowercase, numbers, underscores, and hyphens."
               exit 1
             fi
+
+            HYPHEN_COUNT=$(echo "$FILENAME" | tr -cd '-' | wc -c)
+            if [ "$HYPHEN_COUNT" -lt 2 ] || [ "$HYPHEN_COUNT" -gt 3 ]; then
+              echo "::error file=$FILE::Structure Violation: Filename must have 3 or 4 segments (e.g., 800x480-splash-name-credit.png)."
+              exit 1
+            fi
+
+            # 2. Extract Data from Filename
+            EXPECTED_DIM=$(echo "$FILENAME" | cut -d'-' -f1)
+            TYPE=$(echo "$FILENAME" | cut -d'-' -f2)
+
+            # 3. Validate Format (Real PNG check)
+            # This checks the internal file header, not the extension.
+            ACTUAL_FORMAT=$(identify -format "%m" "$FILE")
+            if [ "$ACTUAL_FORMAT" != "PNG" ]; then
+              echo "::error file=$FILE::File Type Violation: This is a $ACTUAL_FORMAT file disguised as a PNG. Please convert it to a true PNG."
+              exit 1
+            fi
+
+            # 4. Validate Dimensions Prefix Format
+            if [[ ! "$EXPECTED_DIM" =~ ^[0-9]+x[0-9]+$ ]]; then
+              echo "::error file=$FILE::Dimension Prefix Violation: First segment must be [WIDTH]x[HEIGHT] (e.g., 800x480)."
+              exit 1
+            fi
+
+            # 5. Validate Pixel Dimensions
+            ACTUAL_DIM=$(identify -format "%wx%h" "$FILE")
+            if [ "$ACTUAL_DIM" != "$EXPECTED_DIM" ]; then
+              echo "::error file=$FILE::Dimension Mismatch: Filename says $EXPECTED_DIM, but actual image pixels are $ACTUAL_DIM."
+              exit 1
+            fi
+
+            # 6. Validate Content Type
+            if [[ "$TYPE" != "loading" && "$TYPE" != "splash" ]]; then
+              echo "::error file=$FILE::Type Violation: Second segment must be 'loading' or 'splash'."
+              exit 1
+            fi
+            
+            echo "✅ $FILE is a valid $ACTUAL_DIM PNG."
           done
-
-      - name: Generate Gallery
-        run: python3 generate_gallery.py
-
-      - name: Commit and Push Gallery
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          git config --global user.name "Gallery Bot"
-          git config --global user.email "bot@github.com"
-          git add GALLERY_800x480.md
-          git diff --quiet && git diff --staged --quiet || (git commit -m "docs: update 800x480 gallery" && git push)
