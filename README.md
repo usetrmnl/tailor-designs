@@ -1,6 +1,5 @@
 # Community Screens for TMRNL
-[tailor.trmnl.com](https://tailor.trmnl.com/)
-Customize TRMNL with Tailor, our firmware tool that writes custom splash and loading screens for your TRMNL device.
+Customize TRMNL with [Tailor](https://tailor.trmnl.com/), our firmware tool that writes custom splash and loading screens for your TRMNL device.
 
 ## View the Gallery
 - [View the Gallery](https://usetrmnl.github.io/tailor-designs/)
