@@ -85,7 +85,7 @@
 <body class="bg-gray-50 min-h-screen">
     <header class="bg-white shadow-sm">
         <div class="container mx-auto px-4 py-6">
-            <h1 class="text-3xl font-bold text-gray-900">TRMNL Tailor Screen Gallery</h1>
+            <h1 class="text-3xl font-bold text-gray-900">TRMNL <a href="https://tailor.trmnl.com/">Tailor</a> Screen Gallery</h1>
             <p class="text-gray-600 mt-2">Browse screens created by <a href="https://github.com/usetrmnl/tailor-designs">contributors</a></p>
         </div>
     </header>
@@ -174,12 +174,12 @@
 
     <footer class="bg-white border-t mt-12">
         <div class="container mx-auto px-4 py-6 text-center text-gray-500">
-            <p>TRMNL Screen Gallery - A collection of Tailor screen designs</p>
+            <p><a href="https://trmnl.com">TRMNL</a> Screen Gallery - A collection of Tailor screen designs</p>
         </div>
     </footer>
 
     <script>
-        // Function to fetch screens from JSON file or fallback to sample data
+        // Function to fetch screens from JSON file or fallback to sample data for local testing
         async function fetchScreens() {
             // Try to load from screens.json first (from GitHub Actions workflow)
             try {
