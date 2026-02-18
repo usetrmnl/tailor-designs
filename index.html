@@ -93,7 +93,15 @@
                 </div>
             </div>
             
-            <div class="flex items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2">
+                <!-- Screen Size Filter -->
+                <div class="flex items-center gap-2">
+                    <label for="size-filter" class="text-sm font-medium text-gray-700">Screen Size:</label>
+                    <select id="size-filter" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">All Sizes</option>
+                    </select>
+                </div>
+                
                 <!-- Density Toggle -->
                 <div class="flex items-center gap-1">
                     <button id="density-1" class="density-btn px-3 py-1 rounded-lg text-sm" title="Dense">
@@ -309,6 +317,7 @@
         function filterScreens() {
             const searchTerm = document.getElementById('search-input').value.toLowerCase();
             const activeFilter = document.querySelector('.filter-btn.active')?.id;
+            const sizeFilter = document.getElementById('size-filter').value;
             
             let filteredScreens = parsedScreens;
 
@@ -317,6 +326,12 @@
                 filteredScreens = filteredScreens.filter(screen => screen.type === 'splash');
             } else if (activeFilter === 'loading-filter') {
                 filteredScreens = filteredScreens.filter(screen => screen.type === 'loading');
+            }
+
+            // Apply size filter
+            if (sizeFilter) {
+                const [width, height] = sizeFilter.split('x').map(Number);
+                filteredScreens = filteredScreens.filter(screen => screen.width === width && screen.height === height);
             }
 
             // Apply search filter
@@ -331,13 +346,29 @@
             renderScreens(filteredScreens);
         }
 
-        // Initialize the gallery
+// Initialize the gallery
         document.addEventListener('DOMContentLoaded', async () => {
             // Fetch screens data
             const screens = await fetchScreens();
             
             // Parse filenames to get metadata
             parsedScreens = screens;
+            
+            // Populate screen size dropdown with unique screen sizes
+            const sizeFilter = document.getElementById('size-filter');
+            const uniqueSizes = [...new Set(screens.map(screen => `${screen.width}x${screen.height}`))].sort((a, b) => {
+                const [widthA, heightA] = a.split('x').map(Number);
+                const [widthB, heightB] = b.split('x').map(Number);
+                // Sort primarily by width, then by height
+                return widthA - widthB || heightA - heightB;
+            });
+            
+            uniqueSizes.forEach(size => {
+                const option = document.createElement('option');
+                option.value = size;
+                option.textContent = size;
+                sizeFilter.appendChild(option);
+            });
             
             // Set up filter buttons - single select with outlined style
             document.querySelectorAll('.filter-btn').forEach(button => {
@@ -378,6 +409,9 @@
                 searchInput.value = '';
                 filterScreens();
             });
+            
+            // Screen size filter
+            sizeFilter.addEventListener('change', filterScreens);
 			
 			document.getElementById('download-modal').addEventListener('click', function() {
 				const filename = this.dataset.filename;
